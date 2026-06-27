@@ -47,6 +47,7 @@ func startREPL(cfg *config) {
 		}
 	}
 }
+
 func getCommands() map[string]cliCommand {
 	commands = map[string]cliCommand{
 		"exit": {
@@ -59,16 +60,16 @@ func getCommands() map[string]cliCommand {
 			description: "Displays a help message",
 			callback:    commandHelp,
 		},
-		// "map": {
-		// 	name: "map",
-		// 	description: "Display next 20 locations",
-		// 	callback: commandMap,
-		// },
-		// "mapb": {
-		// 	name: "mapb",
-		// 	description: "Display the previous 20 locations",
-		// 	callback: commandMapB,
-		// },
+		"map": {
+			name:        "map",
+			description: "Display next 20 locations",
+			callback:    commandMapf,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Display the previous 20 locations",
+			callback:    commandMapb,
+		},
 	}
 	return commands
 }
@@ -85,6 +86,41 @@ func commandHelp(cfg *config) error {
 	for _, cmd := range getCommands() {
 		fmt.Printf("%s: %s\n", cmd.name, cmd.description)
 	}
+	return nil
+}
+
+func commandMapf(cfg *config) error {
+	locations, err := pokeapi.FetchLocations(cfg.nextLocationURL)
+	if err != nil {
+		return err
+	}
+
+	cfg.nextLocationURL = locations.Next
+	cfg.previousLocationURL = locations.Previous
+
+	for _, location := range locations.Results {
+		fmt.Println(location.Name)
+		// fmt.Println(location.Name)
+	}
+	return nil
+}
+
+func commandMapb(cfg *config) error {
+	if cfg.previousLocationURL == nil {
+		return errors.New("You're on the first page")
+	}
+	locations, err := pokeapi.FetchLocations(cfg.previousLocationURL)
+	if err != nil {
+		return err
+	}
+
+	cfg.nextLocationURL = locations.Next
+	cfg.previousLocationURL = locations.Previous
+
+	for _, location := range locations.Results {
+		fmt.Println(location.Name)
+	}
+
 	return nil
 }
 
