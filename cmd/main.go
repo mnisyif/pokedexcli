@@ -18,13 +18,13 @@ func main() {
 			continue
 		}
 
-		cmd, ok := commands[words[0]]
+		cmd, ok := getCommands()[words[0]]
 		if !ok {
 			fmt.Println("Unknown command")
 			continue
 		}
 
-		err := cmd.callback()
+		err := cmd.callback(cfg)
 		if err != nil {
 			fmt.Println(err)
 		}
