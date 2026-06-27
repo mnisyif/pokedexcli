@@ -14,6 +14,11 @@ type cliCommand struct {
 	callback    func(*config) error
 }
 
+type config struct {
+	nextLocationURL     string
+	previousLocationURL string
+}
+
 func getCommands() map[string]cliCommand {
 	commands = map[string]cliCommand{
 		"exit": {
@@ -51,3 +56,27 @@ func commandHelp(cfg *config) error {
 	fmt.Println("Usage:\n")
 	for _, cmd := range getCommands() {
 		fmt.Printf("%s: %s\n", cmd.name, cmd.description)
+	}
+	return nil
+}
+
+func cleanInput(text string) []string {
+	var result []string
+	sep := " "
+	i := strings.Index(text, sep)
+
+	for i > -1 {
+		word := strings.ToLower(text[:i])
+		if word != "" {
+			result = append(result, strings.ToLower(text[:i]))
+		}
+		text = text[i+len(sep):]
+		i = strings.Index(text, sep)
+	}
+
+	if text != "" {
+		result = append(result, strings.ToLower(text))
+	}
+
+	return result
+}

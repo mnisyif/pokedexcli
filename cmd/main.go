@@ -7,6 +7,11 @@ import (
 )
 
 func main() {
+	cfg := &config{
+		nextLocationURL:     "someText",
+		previousLocationURL: "otherText",
+	}
+
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
