@@ -82,7 +82,8 @@ func commandExit(cfg *config) error {
 
 func commandHelp(cfg *config) error {
 	fmt.Println("Welcome to the Pokedex!")
-	fmt.Println("Usage:\n")
+	fmt.Println("Usage:")
+	fmt.Println()
 	for _, cmd := range getCommands() {
 		fmt.Printf("%s: %s\n", cmd.name, cmd.description)
 	}
@@ -107,8 +108,9 @@ func commandMapf(cfg *config) error {
 
 func commandMapb(cfg *config) error {
 	if cfg.previousLocationURL == nil {
-		return errors.New("You're on the first page")
+		return errors.New("you're on the first page")
 	}
+
 	locations, err := pokeapi.FetchLocations(cfg.previousLocationURL)
 	if err != nil {
 		return err
