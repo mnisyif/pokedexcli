@@ -19,6 +19,7 @@ type cliCommand struct {
 }
 
 type config struct {
+	client              *pokeapi.Client
 	nextLocationURL     *string
 	previousLocationURL *string
 }
@@ -91,7 +92,7 @@ func commandHelp(cfg *config) error {
 }
 
 func commandMapf(cfg *config) error {
-	locations, err := pokeapi.FetchLocations(cfg.nextLocationURL)
+	locations, err := cfg.client.FetchLocations(cfg.nextLocationURL)
 	if err != nil {
 		return err
 	}
@@ -111,7 +112,7 @@ func commandMapb(cfg *config) error {
 		return errors.New("you're on the first page")
 	}
 
-	locations, err := pokeapi.FetchLocations(cfg.previousLocationURL)
+	locations, err := cfg.client.FetchLocations(cfg.previousLocationURL)
 	if err != nil {
 		return err
 	}

@@ -5,7 +5,13 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+
+	"github.com/mnisyif/pokedexcli/internal/pokecache"
 )
+
+type Client struct {
+	Cache *pokecache.Cache
+}
 
 type PokeLocationAreas struct {
 	Count    int     `json:"count"`
@@ -17,10 +23,21 @@ type PokeLocationAreas struct {
 	} `json:"results"`
 }
 
-func FetchLocations(pageURL *string) (PokeLocationAreas, error) {
+func (c *Client) FetchLocations(pageURL *string) (PokeLocationAreas, error) {
 	url := baseURL
 	if pageURL != nil {
 		url = *pageURL
+	}
+
+	locationAreas := PokeLocationAreas{}
+	cached, exists := c.Cache.Get(url)
+	if exists {
+		err := json.Unmarshal(cached, &locationAreas)
+		if err != nil {
+			return PokeLocationAreas{}, err
+		}
+
+		return locationAreas, nil
 	}
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -41,7 +58,6 @@ func FetchLocations(pageURL *string) (PokeLocationAreas, error) {
 		return PokeLocationAreas{}, err
 	}
 
-	var locationAreas PokeLocationAreas
 	err = json.Unmarshal(data, &locationAreas)
 	if err != nil {
 		return PokeLocationAreas{}, err
