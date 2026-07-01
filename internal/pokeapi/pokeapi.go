@@ -3,6 +3,7 @@ package pokeapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -21,6 +22,17 @@ type PokeLocationAreas struct {
 		Name string `json:"name"`
 		URL  string `json:"url"`
 	} `json:"results"`
+}
+
+type PokemonEncounter struct {
+	Pokemon struct {
+		Name *string `json:"name"`
+		URL  *string `json:"url"`
+	} `json:"pokemon"`
+}
+
+type LocationAreaDetails struct {
+	PokemonEncounters []PokemonEncounter `json:"pokemon_encounters"`
 }
 
 func (c *Client) FetchLocations(pageURL *string) (PokeLocationAreas, error) {
@@ -64,4 +76,44 @@ func (c *Client) FetchLocations(pageURL *string) (PokeLocationAreas, error) {
 	}
 
 	return locationAreas, nil
+}
+
+func (c *Client) EncounterPokemons(locationID *string) (LocationAreaDetails, error) {
+	url := fmt.Sprintf("%s/%s", baseURL, *locationID)
+
+	locationDetails := LocationAreaDetails{}
+	cached, exists := c.Cache.Get(url)
+	if exists {
+		err := json.Unmarshal(cached, &locationDetails)
+		if err != nil {
+			return LocationAreaDetails{}, err
+		}
+
+		return locationDetails, nil
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return LocationAreaDetails{}, err
+	}
+
+	var client http.Client
+	res, err := client.Do(req)
+	if err != nil {
+		return LocationAreaDetails{}, err
+	}
+
+	defer res.Body.Close()
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return LocationAreaDetails{}, err
+	}
+
+	err = json.Unmarshal(data, &locationDetails)
+	if err != nil {
+		return LocationAreaDetails{}, err
+	}
+
+	return locationDetails, nil
 }
