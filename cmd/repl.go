@@ -22,6 +22,7 @@ type config struct {
 	client              *pokeapi.Client
 	nextLocationURL     *string
 	previousLocationURL *string
+	locationArea        *string
 }
 
 func startREPL(cfg *config) {
@@ -40,6 +41,10 @@ func startREPL(cfg *config) {
 		if !ok {
 			fmt.Println("Unknown command")
 			continue
+		}
+
+		if len(words) >= 2 {
+			cfg.locationArea = &words[1]
 		}
 
 		err := cmd.callback(cfg)
@@ -70,6 +75,11 @@ func getCommands() map[string]cliCommand {
 			name:        "mapb",
 			description: "Display the previous 20 locations",
 			callback:    commandMapb,
+		},
+		"explore": {
+			name:        "explore",
+			description: "List all pokemons in this area",
+			callback:    commandExplore,
 		},
 	}
 	return commands
@@ -122,6 +132,20 @@ func commandMapb(cfg *config) error {
 
 	for _, location := range locations.Results {
 		fmt.Println(location.Name)
+	}
+
+	return nil
+}
+
+func commandExplore(cfg *config) error {
+	pokemons, err := cfg.client.EncounterPokemons(cfg.locationArea)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Exploring %s...\n", *cfg.locationArea)
+	for _, value := range pokemons.PokemonEncounters {
+		fmt.Printf("  - %s\n", *value.Pokemon.Name)
 	}
 
 	return nil
