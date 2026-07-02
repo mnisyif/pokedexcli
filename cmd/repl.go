@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"math"
+	"math/rand/v2"
 	"os"
 	"strings"
 
@@ -172,15 +174,22 @@ func commandCatch(cfg *config, args ...string) error {
 	name := args[0]
 	pokemon, err := cfg.client.FetchPokemon(&name)
 	if err != nil {
-		return err
+		return fmt.Errorf("pokemon %s not found in the wild", name)
 	}
 
-	fmt.Printf("Name: %s\n", pokemon.Name)
-	fmt.Printf("Base Experience: %d\n", pokemon.BaseExperience)
-	fmt.Printf("Height: %d\n", pokemon.Height)
-	fmt.Printf("Weight: %d\n", pokemon.Weight)
+	fmt.Printf("Throwing a Pokeball at %s...\n", args[0])
 
-	fmt.Printf("Throwing ball at %s...\n", args[0])
+	threshold := math.Log(float64(pokemon.BaseExperience)) / math.Log(960)
+	if threshold > 0.95 {
+		threshold = 0.95
+	}
+
+	if rand.Float64() > threshold {
+		fmt.Printf("%s was caught!\n", pokemon.Name)
+	} else {
+		fmt.Printf("%s escaped!\n", pokemon.Name)
+	}
+
 	return nil
 }
 
