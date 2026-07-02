@@ -68,6 +68,10 @@ func FetchAndCache[T any](cache *pokecache.Cache, url string) (T, error) {
 		return result, err
 	}
 
+	if res.StatusCode != http.StatusOK {
+		return result, fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+
 	defer res.Body.Close()
 
 	data, err := io.ReadAll(res.Body)
