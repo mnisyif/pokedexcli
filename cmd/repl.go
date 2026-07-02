@@ -15,14 +15,13 @@ var commands map[string]cliCommand
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, ...string) error
 }
 
 type config struct {
 	client              *pokeapi.Client
 	nextLocationURL     *string
 	previousLocationURL *string
-	locationArea        *string
 }
 
 func startREPL(cfg *config) {
@@ -37,17 +36,20 @@ func startREPL(cfg *config) {
 			continue
 		}
 
-		cmd, ok := getCommands()[words[0]]
+		command := words[0]
+		args := []string{}
+
+		if len(words) > 1 {
+			args = words[1:]
+		}
+
+		cmd, ok := getCommands()[command]
 		if !ok {
 			fmt.Println("Unknown command")
 			continue
 		}
 
-		if len(words) >= 2 {
-			cfg.locationArea = &words[1]
-		}
-
-		err := cmd.callback(cfg)
+		err := cmd.callback(cfg, args...)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -81,17 +83,22 @@ func getCommands() map[string]cliCommand {
 			description: "List all pokemons in this area",
 			callback:    commandExplore,
 		},
+		"catch": {
+			name:        "catch",
+			description: "Attempt to catch a pokemon",
+			callback:    commandCatch,
+		},
 	}
 	return commands
 }
 
-func commandExit(cfg *config) error {
+func commandExit(cfg *config, args ...string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(cfg *config) error {
+func commandHelp(cfg *config, args ...string) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
 	fmt.Println()
@@ -101,7 +108,7 @@ func commandHelp(cfg *config) error {
 	return nil
 }
 
-func commandMapf(cfg *config) error {
+func commandMapf(cfg *config, args ...string) error {
 	locations, err := cfg.client.FetchLocations(cfg.nextLocationURL)
 	if err != nil {
 		return err
@@ -117,7 +124,7 @@ func commandMapf(cfg *config) error {
 	return nil
 }
 
-func commandMapb(cfg *config) error {
+func commandMapb(cfg *config, args ...string) error {
 	if cfg.previousLocationURL == nil {
 		return errors.New("you're on the first page")
 	}
@@ -137,17 +144,43 @@ func commandMapb(cfg *config) error {
 	return nil
 }
 
-func commandExplore(cfg *config) error {
-	pokemons, err := cfg.client.EncounterPokemons(cfg.locationArea)
+func commandExplore(cfg *config, args ...string) error {
+	if len(args) != 1 {
+		return errors.New("you must provide a location name")
+	}
+
+	name := args[0]
+	pokemons, err := cfg.client.EncounterPokemons(&name)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Exploring %s...\n", *cfg.locationArea)
+	fmt.Printf("Exploring %s...\n", name)
+	fmt.Println("Found Pokemon: ")
 	for _, value := range pokemons.PokemonEncounters {
 		fmt.Printf("  - %s\n", *value.Pokemon.Name)
 	}
 
+	return nil
+}
+
+func commandCatch(cfg *config, args ...string) error {
+	if len(args) != 1 {
+		return errors.New("you must provide a pokemon name")
+	}
+
+	name := args[0]
+	pokemon, err := cfg.client.FetchPokemon(&name)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Name: %s\n", pokemon.Name)
+	fmt.Printf("Base Experience: %d\n", pokemon.BaseExperience)
+	fmt.Printf("Height: %d\n", pokemon.Height)
+	fmt.Printf("Weight: %d\n", pokemon.Weight)
+
+	fmt.Printf("Throwing ball at %s...\n", args[0])
 	return nil
 }
 
