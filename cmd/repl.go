@@ -53,6 +53,7 @@ func startREPL(cfg *config) {
 		if err != nil {
 			fmt.Println(err)
 		}
+		fmt.Println()
 	}
 }
 
@@ -79,12 +80,12 @@ func getCommands() map[string]cliCommand {
 			callback:    commandMapb,
 		},
 		"explore": {
-			name:        "explore",
+			name:        "explore <location_name>",
 			description: "List all pokemons in this area",
 			callback:    commandExplore,
 		},
 		"catch": {
-			name:        "catch",
+			name:        "catch <pokemon_name>",
 			description: "Attempt to catch a pokemon",
 			callback:    commandCatch,
 		},
@@ -101,9 +102,8 @@ func commandExit(cfg *config, args ...string) error {
 func commandHelp(cfg *config, args ...string) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
-	fmt.Println()
 	for _, cmd := range getCommands() {
-		fmt.Printf("%s: %s\n", cmd.name, cmd.description)
+		fmt.Printf("    %s: %s\n", cmd.name, cmd.description)
 	}
 	return nil
 }
