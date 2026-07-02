@@ -35,6 +35,18 @@ type LocationAreaDetails struct {
 	PokemonEncounters []PokemonEncounter `json:"pokemon_encounters"`
 }
 
+type PokemonDetails struct {
+	Name           string `json:"name"`
+	BaseExperience int    `json:"base_experience"`
+	Height         int    `json:"height"`
+	Weight         int    `json:"weight"`
+	Stats          []struct {
+		BaseStat int `json:"base_stat"`
+		Stat     struct {
+			Name string `json:"name"`
+		} `json:"stat"`
+	} `json:"stats"`
+}
 
 func FetchAndCache[T any](cache *pokecache.Cache, url string) (T, error) {
 	var result T
@@ -85,5 +97,8 @@ func (c *Client) EncounterPokemons(locationID *string) (LocationAreaDetails, err
 	return FetchAndCache[LocationAreaDetails](c.Cache, url)
 }
 
+func (c *Client) FetchPokemon(pokemonName *string) (PokemonDetails, error) {
+	url := fmt.Sprint("%s/pokemon/%s", *pokemonName)
 
+	return FetchAndCache[PokemonDetails](c.Cache, url)
 }
