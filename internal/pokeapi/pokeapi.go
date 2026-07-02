@@ -83,7 +83,7 @@ func FetchAndCache[T any](cache *pokecache.Cache, url string) (T, error) {
 }
 
 func (c *Client) FetchLocations(pageURL *string) (PokeLocationAreas, error) {
-	url := baseURL + "/location-area"
+	url := fmt.Sprintf("%s/location-area", baseURL)
 	if pageURL != nil {
 		url = *pageURL
 	}
@@ -92,13 +92,13 @@ func (c *Client) FetchLocations(pageURL *string) (PokeLocationAreas, error) {
 }
 
 func (c *Client) EncounterPokemons(locationID *string) (LocationAreaDetails, error) {
-	url := fmt.Sprintf("/%s/location-area/%s", baseURL, *locationID)
+	url := fmt.Sprintf("%s/location-area/%s", baseURL, *locationID)
 
 	return FetchAndCache[LocationAreaDetails](c.Cache, url)
 }
 
 func (c *Client) FetchPokemon(pokemonName *string) (PokemonDetails, error) {
-	url := fmt.Sprint("/%s/pokemon/%s", baseURL, *pokemonName)
+	url := fmt.Sprintf("%s/pokemon/%s", baseURL, *pokemonName)
 
 	return FetchAndCache[PokemonDetails](c.Cache, url)
 }
