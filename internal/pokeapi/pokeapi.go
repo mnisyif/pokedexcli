@@ -35,85 +35,55 @@ type LocationAreaDetails struct {
 	PokemonEncounters []PokemonEncounter `json:"pokemon_encounters"`
 }
 
+
+func FetchAndCache[T any](cache *pokecache.Cache, url string) (T, error) {
+	var result T
+
+	cached, exists := cache.Get(url)
+	if exists {
+		err := json.Unmarshal(cached, &result)
+		return result, err
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return result, err
+	}
+
+	var client http.Client
+	res, err := client.Do(req)
+	if err != nil {
+		return result, err
+	}
+
+	defer res.Body.Close()
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return result, err
+	}
+
+	err = json.Unmarshal(data, &result)
+
+	cache.Add(url, data)
+
+	return result, err
+}
+
 func (c *Client) FetchLocations(pageURL *string) (PokeLocationAreas, error) {
-	url := baseURL
+	url := baseURL + "/location-area"
 	if pageURL != nil {
 		url = *pageURL
 	}
 
-	locationAreas := PokeLocationAreas{}
-	cached, exists := c.Cache.Get(url)
-	if exists {
-		err := json.Unmarshal(cached, &locationAreas)
-		if err != nil {
-			return PokeLocationAreas{}, err
-		}
-
-		return locationAreas, nil
-	}
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return PokeLocationAreas{}, err
-	}
-
-	var client http.Client
-	res, err := client.Do(req)
-	if err != nil {
-		return PokeLocationAreas{}, err
-	}
-
-	defer res.Body.Close()
-
-	data, err := io.ReadAll(res.Body)
-	if err != nil {
-		return PokeLocationAreas{}, err
-	}
-
-	err = json.Unmarshal(data, &locationAreas)
-	if err != nil {
-		return PokeLocationAreas{}, err
-	}
-
-	return locationAreas, nil
+	return FetchAndCache[PokeLocationAreas](c.Cache, url)
 }
 
 func (c *Client) EncounterPokemons(locationID *string) (LocationAreaDetails, error) {
-	url := fmt.Sprintf("%s/%s", baseURL, *locationID)
+	url := fmt.Sprintf("%s/location-area/%s", baseURL, *locationID)
 
-	locationDetails := LocationAreaDetails{}
-	cached, exists := c.Cache.Get(url)
-	if exists {
-		err := json.Unmarshal(cached, &locationDetails)
-		if err != nil {
-			return LocationAreaDetails{}, err
-		}
+	return FetchAndCache[LocationAreaDetails](c.Cache, url)
+}
 
-		return locationDetails, nil
-	}
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return LocationAreaDetails{}, err
-	}
-
-	var client http.Client
-	res, err := client.Do(req)
-	if err != nil {
-		return LocationAreaDetails{}, err
-	}
-
-	defer res.Body.Close()
-
-	data, err := io.ReadAll(res.Body)
-	if err != nil {
-		return LocationAreaDetails{}, err
-	}
-
-	err = json.Unmarshal(data, &locationDetails)
-	if err != nil {
-		return LocationAreaDetails{}, err
-	}
-
-	return locationDetails, nil
 }
